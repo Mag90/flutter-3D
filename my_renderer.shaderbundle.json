@@ -1,0 +1,34 @@
+{
+    "TriangleVertex": {
+        "type": "vertex",
+        "file": "shaders/triangle.vert"
+    },
+    "TriangleFragment": {
+        "type": "fragment",
+        "file": "shaders/triangle.frag"
+    },
+    "SimpleCubeVertex": {
+        "type": "vertex",
+        "file": "shaders/simple_cube.vert"
+    },
+    "SimpleCubeFragment": {
+        "type": "fragment",
+        "file": "shaders/simple_cube.frag"
+    },
+    "ShadedCubeVertex": {
+        "type": "vertex",
+        "file": "shaders/shaded_cube.vert"
+    },
+    "ShadedCubeFragment": {
+        "type": "fragment",
+        "file": "shaders/shaded_cube.frag"
+    },
+    "TerrainVertex": {
+        "type": "vertex",
+        "file": "shaders/terrain.vert"
+    },
+    "TerrainFragment": {
+        "type": "fragment",
+        "file": "shaders/terrain.frag"
+    }
+}
