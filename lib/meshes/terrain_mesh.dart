@@ -23,7 +23,7 @@ class TerrainMesh {
     final gridX = resolution;
     final gridZ = resolution;
 
-    // Create vertices array: position (3) + normal (3) + color/uv (2)
+    // Create vertices array: position (3) + normal (3) + uv (2)
     final vertices = Float32List(gridX * gridZ * 8);
     int vIndex = 0;
 
@@ -40,7 +40,7 @@ class TerrainMesh {
         final pixel = bytes.getUint8((imgY * heightmap.width + imgX) * 4);
         final yPos = (pixel / 255.0 - 0.5) * height;
 
-        // Calculate normal (will be updated later)
+        // Calculate normal
         final normal = _calculateNormal(x, z, gridX, gridZ, vertices, width, height, depth);
 
         // Store vertex data
@@ -92,8 +92,6 @@ class TerrainMesh {
     double depth,
   ) {
     // Calculate normal based on surrounding vertices
-    // This is a simplified normal calculation
-    // You might want to improve this for better results
     final pos = Vector3(
       (x / (gridX - 1) - 0.5) * width,
       0,
