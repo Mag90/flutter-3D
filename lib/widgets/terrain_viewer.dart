@@ -25,10 +25,21 @@ class _TerrainViewerState extends State<TerrainViewer> {
   }
 
   Future<void> _initializeTerrain() async {
-    final heightmap = await HeightmapGenerator.generateCircular(
+    // final heightmap = await HeightmapGenerator.generateVolcano(
+    //   width: 256,
+    //   height: 256,
+    //   outerRadius: 0.8,
+    //   innerRadius: 0.1,
+    //   craterDepth: 0.6,
+    //   rimHeight: 0.15,
+    // );
+
+    final heightmap = await HeightmapGenerator.generateNoise(
       width: 256,
       height: 256,
-      inverse: true,
+      octaves: 4,
+      persistence: 0.5,
+      scale: 50.0,
     );
 
     final mesh = await TerrainMesh.create(

@@ -65,12 +65,6 @@ class TerrainPainter extends CustomPainter {
       ByteData.sublistView(terrainMesh.indices),
     )!;
 
-    // Lighting parameters
-    final Vector3 lightPosition = Vector3(2.0, 4.0, 2.0);
-    final Vector3 lightColor = Vector3(1.0, 1.0, 1.0);
-    final double ambientStrength = 0.3;
-    final double specularStrength = 0.7;
-
     // Create transformation matrices
     final aspect = size.width / size.height;
     final projection = camera.getProjectionMatrix(aspect);
@@ -78,20 +72,35 @@ class TerrainPainter extends CustomPainter {
     final model = Matrix4.identity();
     final mvp = projection * view * model;
 
+    // Calculate camera position for light placement
+    final viewInverse = view.clone()..invert();
+    final cameraPosition = viewInverse.getTranslation(); // Correct way
+
+    // Lighting parameters
+    final Vector3 lightColor = Vector3(1.0, 1.0, 1.0);
+    final double ambientStrength = 0.3;
+    final double specularStrength = 0.7;
+
     // Create uniform buffer
     final uniformData = Float32List(16 + 16 + 4 + 4 + 4);
     int offset = 0;
 
+    // Pass MVP matrix
     uniformData.setAll(offset, mvp.storage);
     offset += 16;
 
-    uniformData.setAll(offset, model.storage);
+    // Pass model-view matrix for normal transformation
+    final modelView = view * model;
+    uniformData.setAll(offset, modelView.storage);
     offset += 16;
 
-    uniformData[offset++] = lightPosition.x;
-    uniformData[offset++] = lightPosition.y;
-    uniformData[offset++] = lightPosition.z;
-    uniformData[offset++] = 0.0;
+    // Pass light position in view space
+    //final lightPosViewSpace = view.transform3(cameraPosition);
+    final Vector3 lightPositionWorld = cameraPosition + Vector3(5.0, 5.0, 0.0);
+    uniformData[offset++] = lightPositionWorld.x;
+    uniformData[offset++] = lightPositionWorld.y;
+    uniformData[offset++] = lightPositionWorld.z;
+    uniformData[offset++] = 1.0;
 
     uniformData[offset++] = lightColor.x;
     uniformData[offset++] = lightColor.y;
