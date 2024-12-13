@@ -35,11 +35,11 @@ class _TerrainViewerState extends State<TerrainViewer> {
     // );
 
     final heightmap = await HeightmapGenerator.generateNoise(
-      width: 256,
-      height: 256,
+      width: 512,
+      height: 512,
       octaves: 4,
       persistence: 0.5,
-      scale: 50.0,
+      scale: 100.0,
     );
 
     final mesh = await TerrainMesh.create(
@@ -47,7 +47,7 @@ class _TerrainViewerState extends State<TerrainViewer> {
       width: 10.0,
       height: 2.0,
       depth: 10.0,
-      resolution: 100,
+      resolution: 200,
     );
 
     setState(() {

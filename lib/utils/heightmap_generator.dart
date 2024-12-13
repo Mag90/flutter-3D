@@ -48,32 +48,48 @@ class HeightmapGenerator {
 
     // Create noise texture
     paint.color = Colors.white;
-    final random = math.Random(42); // Fixed seed for consistent results
+    final permutation = _generatePermutation();
 
+    double maxValue = 0.0;
+    final noiseValues = List<double>.filled(width * height, 0.0);
+
+    // Generate noise for each octave
     for (int octave = 0; octave < octaves; octave++) {
       final frequency = math.pow(2, octave).toDouble();
       final amplitude = math.pow(persistence, octave).toDouble();
 
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-          final value = _noise2D(
+          final value = _perlinNoise(
             x * frequency / scale,
             y * frequency / scale,
-            random,
+            permutation,
           );
 
-          paint.color = Color.fromRGBO(
-            255,
-            255,
-            255,
-            (value * amplitude).clamp(0.0, 1.0),
-          );
-
-          canvas.drawRect(
-            Rect.fromLTWH(x.toDouble(), y.toDouble(), 1, 1),
-            paint,
-          );
+          final index = y * width + x;
+          noiseValues[index] += value * amplitude;
+          maxValue = math.max(maxValue, noiseValues[index]);
         }
+      }
+    }
+
+    // Normalize and draw the noise values
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        final index = y * width + x;
+        final normalizedValue = noiseValues[index] / maxValue;
+
+        paint.color = Color.fromRGBO(
+          255,
+          255,
+          255,
+          normalizedValue.clamp(0.0, 1.0),
+        );
+
+        canvas.drawRect(
+          Rect.fromLTWH(x.toDouble(), y.toDouble(), 1, 1),
+          paint,
+        );
       }
     }
 
@@ -83,19 +99,75 @@ class HeightmapGenerator {
     return image;
   }
 
-  /// Simple 2D noise function
-  static double _noise2D(double x, double y, math.Random random) {
-    return random.nextDouble();
+  /// Generates a permutation table for Perlin noise
+  static List<int> _generatePermutation() {
+    final random = math.Random(42); // Fixed seed for consistent results
+    final p = List<int>.generate(256, (i) => i);
+
+    // Shuffle the array
+    for (int i = p.length - 1; i > 0; i--) {
+      final j = random.nextInt(i + 1);
+      final temp = p[i];
+      p[i] = p[j];
+      p[j] = temp;
+    }
+
+    // Extend the permutation table to avoid overflow
+    return [...p, ...p];
+  }
+
+  /// Fade function for Perlin noise
+  static double _fade(double t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+  }
+
+  /// Linear interpolation
+  static double _lerp(double t, double a, double b) {
+    return a + t * (b - a);
+  }
+
+  /// Gradient function for Perlin noise
+  static double _grad(int hash, double x, double y) {
+    final h = hash & 15;
+    final grad_x = 1 + (h & 7); // Gradient x
+    final grad_y = 1 + (h >> 4); // Gradient y
+    return ((h & 8) != 0 ? -grad_x : grad_x) * x + ((h & 8) != 0 ? -grad_y : grad_y) * y;
+  }
+
+  /// 2D Perlin noise implementation
+  static double _perlinNoise(double x, double y, List<int> p) {
+    // Find unit cube that contains the point
+    final X = x.floor() & 255;
+    final Y = y.floor() & 255;
+
+    // Find relative x, y of point in cube
+    x -= x.floor();
+    y -= y.floor();
+
+    // Compute fade curves for each of x, y
+    final u = _fade(x);
+    final v = _fade(y);
+
+    // Hash coordinates of the 4 cube corners
+    final A = p[X] + Y;
+    final AA = p[A];
+    final AB = p[A + 1];
+    final B = p[X + 1] + Y;
+    final BA = p[B];
+    final BB = p[B + 1];
+
+    // Add blended results from 4 corners of cube
+    return _lerp(v, _lerp(u, _grad(p[AA], x, y), _grad(p[BA], x - 1, y)), _lerp(u, _grad(p[AB], x, y - 1), _grad(p[BB], x - 1, y - 1)));
   }
 
   /// Generates a volcano-shaped heightmap
   static Future<ui.Image> generateVolcano({
     required int width,
     required int height,
-    double outerRadius = 0.8, // Radius of the volcano base (as fraction of image size)
-    double innerRadius = 0.3, // Radius of the crater (as fraction of image size)
-    double craterDepth = 0.4, // How deep the crater goes (as fraction of height)
-    double rimHeight = 0.2, // Extra height at the crater rim (as fraction of height)
+    double outerRadius = 0.8,
+    double innerRadius = 0.3,
+    double craterDepth = 0.4,
+    double rimHeight = 0.2,
   }) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
